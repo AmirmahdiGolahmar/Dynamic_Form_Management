@@ -3,6 +3,16 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from .utils import (
+    normalize_email, generate_otp, put_otp, get_otp, clear_otp,
+    set_cooldown, in_cooldown, bump_attempt, OTP_MAX_ATTEMPTS
+)
+from .emailer import send_otp_email
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError as DjangoValidationError
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.conf import settings
+
 
 User = get_user_model()
 
@@ -93,3 +103,94 @@ class TokenPairSerializer(TokenObtainPairSerializer):
         token["username"] = user.username
         token["phone"] = user.phone
         return token
+
+
+class EmailOTPRequestSerializer(serializers.Serializer):
+    email = serializers.CharField()
+
+    def validate_email(self, v):
+        email = normalize_email(v)
+        try:
+            validate_email(email)
+        except DjangoValidationError:
+            raise serializers.ValidationError("Invalid email address.")
+        return email
+
+    def create(self, validated_data):
+        email = validated_data["email"]
+        if in_cooldown(email):
+            raise serializers.ValidationError("OTP recently sent. Please wait before requesting again.")
+
+        code = generate_otp(6)
+        put_otp(email, code)
+        set_cooldown(email)
+        send_otp_email(email, code)
+
+        payload = {"sent": True}
+        if getattr(settings, "DEBUG_SHOW_OTP", False):
+            payload["debug_code"] = code
+        return payload
+
+
+class EmailOTPVerifySerializer(serializers.Serializer):
+    email = serializers.CharField()
+    code  = serializers.CharField()
+
+    def validate(self, attrs):
+        email = normalize_email(attrs.get("email"))
+        code  = (attrs.get("code") or "").strip()
+
+        try:
+            validate_email(email)
+        except DjangoValidationError:
+            raise serializers.ValidationError({"email": "Invalid email address."})
+
+        data = get_otp(email)
+        if not data:
+            raise serializers.ValidationError({"code": "Code expired or not requested."})
+
+        if data.get("attempts", 0) >= OTP_MAX_ATTEMPTS:
+            raise serializers.ValidationError({"code": "Too many attempts. Request a new code."})
+
+        if data["code"] != code:
+            attempts = bump_attempt(email)
+            raise serializers.ValidationError({"code": f"Invalid code ({attempts}/{OTP_MAX_ATTEMPTS})."})
+
+        attrs["email"] = email
+        return attrs
+
+    def create(self, validated_data):
+        email = validated_data["email"]
+
+        existing = list(User.objects.filter(email__iexact=email)[:2])
+        if len(existing) > 1:
+            raise serializers.ValidationError(
+                {"email": "Multiple accounts use this email. Contact support."}
+            )
+
+        if not existing:
+            raise serializers.ValidationError(
+                {"email": "No account found with this email address."}
+            )
+
+        # If user exists, continue as before
+        user = existing[0]
+
+        # success → clear OTP
+        clear_otp(email)
+
+        # issue JWT pair
+        refresh = RefreshToken.for_user(user)
+        refresh["email"] = user.email
+        access = refresh.access_token
+        access["email"] = user.email
+
+        return {
+            "user": {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+            },
+            "refresh": str(refresh),
+            "access": str(access),
+        }

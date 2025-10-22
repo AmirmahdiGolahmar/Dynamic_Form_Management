@@ -1,10 +1,9 @@
-from rest_framework import permissions, status
-from rest_framework.response import Response
-from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-
 from .serializers import RegisterSerializer, MeSerializer, LoginSerializer, TokenPairSerializer
-
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status, permissions
+from .serializers import EmailOTPRequestSerializer, EmailOTPVerifySerializer
 
 class RegisterView(APIView):
     permission_classes = [permissions.AllowAny]
@@ -15,7 +14,6 @@ class RegisterView(APIView):
         user = ser.save()
         return Response({"message": "Registered successfully."}, status=status.HTTP_201_CREATED)
 
-
 class LoginView(TokenObtainPairView):
     """
     POST body can be:
@@ -25,13 +23,11 @@ class LoginView(TokenObtainPairView):
     """
     serializer_class = LoginSerializer
 
-
 class RefreshView(TokenRefreshView):
     pass
 
 class TokenPairView(TokenObtainPairView):
     serializer_class = TokenPairSerializer
-
 
 class MeView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -44,3 +40,22 @@ class MeView(APIView):
         ser.is_valid(raise_exception=True)
         ser.save()
         return Response(ser.data)
+
+class EmailOTPRequestView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        ser = EmailOTPRequestSerializer(data=request.data)
+        ser.is_valid(raise_exception=True)
+        data = ser.save()
+        return Response(data, status=status.HTTP_200_OK)
+
+class EmailOTPVerifyView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        ser = EmailOTPVerifySerializer(data=request.data)
+        ser.is_valid(raise_exception=True)
+        data = ser.save()
+        return Response(data, status=status.HTTP_200_OK)
+
