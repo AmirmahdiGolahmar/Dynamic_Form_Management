@@ -165,3 +165,10 @@ Desktop.ini
 *.key
 *.crt
 *.p12
+
+
+# Docker
+*.pid
+*.tar
+*.log
+docker-compose.override.yml

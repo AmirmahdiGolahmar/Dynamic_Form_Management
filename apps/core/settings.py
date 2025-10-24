@@ -12,21 +12,27 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 from pathlib import Path
 import os
+import dotenv
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+
+# ---------------------------------
+# Base Directory
+# ---------------------------------
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# ---------------------------------
+# Environment Loading
+# ---------------------------------
+# Load environment variables from the appropriate .env file
+ENV_FILE = '.env.prod' if os.getenv('DJANGO_ENV') == 'production' else '.env.dev'
+dotenv.load_dotenv(os.path.join(BASE_DIR.parent, ENV_FILE))
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-+2$-7&kwg$n%w$8u9z&ov*og73qg3zzne0r9&3=c-fid75#4#n'
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+# ---------------------------------
+# Basic Django Config
+# ---------------------------------
+SECRET_KEY = os.getenv('SECRET_KEY', 'fallback_secret_key')
+DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
 
 
 # Application definition
@@ -79,8 +85,12 @@ WSGI_APPLICATION = 'core.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('DATABASE_NAME'),
+        'USER': os.getenv('DATABASE_USER'),
+        'PASSWORD': os.getenv('DATABASE_PASSWORD'),
+        'HOST': os.getenv('DATABASE_HOST'),
+        'PORT': os.getenv('DATABASE_PORT', '5432'),
     }
 }
 
@@ -116,14 +126,10 @@ USE_I18N = True
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/4.2/howto/static-files/
-
+# ---------------------------------
+# Static Files
+# ---------------------------------
 STATIC_URL = 'static/'
-
-# Default primary key field type
-# https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
