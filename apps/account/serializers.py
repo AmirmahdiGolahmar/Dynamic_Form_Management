@@ -119,11 +119,11 @@ class EmailOTPRequestSerializer(serializers.Serializer):
     def create(self, validated_data):
         email = validated_data["email"]
         if in_cooldown(email):
-            raise serializers.ValidationError("OTP recently sent. Please wait before requesting again.")
+            raise serializers.ValidationError({"detail": "OTP recently sent. Try again soon."})
 
         code = generate_otp(6)
         put_otp(email, code)
-        set_cooldown(email)
+        set_cooldown(email, seconds=60)
         send_otp_email(email, code)
 
         payload = {"sent": True}

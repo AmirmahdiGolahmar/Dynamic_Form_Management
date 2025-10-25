@@ -22,7 +22,7 @@ import environ
 # ---------------------------------
 BASE_DIR = Path(__file__).resolve().parent.parent
 env = environ.Env()
-env.read_env(os.path.join(BASE_DIR, ".env"))
+env.read_env(os.path.join(BASE_DIR, "../.env"))
 
 # ---------------------------------
 # Environment Loading
@@ -35,7 +35,8 @@ dotenv.load_dotenv(os.path.join(BASE_DIR.parent, ENV_FILE))
 # Basic Django Config
 # ---------------------------------
 SECRET_KEY = os.getenv('SECRET_KEY', 'fallback_secret_key')
-DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
+# DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
+DEBUG = True
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
 
 
@@ -100,8 +101,8 @@ DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="amirmahdigolahmar@gmail.
 
 CACHES = {
     "default": {
-        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-        "LOCATION": "otp-cache",
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/1",
     }
 }
 

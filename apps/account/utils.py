@@ -17,7 +17,7 @@ def otp_key(email: str) -> str:
     return f"otp:email:{email}"
 
 def otp_cooldown_key(email: str) -> str:
-    return f"otp:cooldown:email:{email}"
+    return f"otp:cooldown:{email.strip().lower()}"
 
 def put_otp(email: str, code: str):
     cache.set(otp_key(email), {"code": code, "attempts": 0}, OTP_TTL)
@@ -36,8 +36,8 @@ def bump_attempt(email: str) -> int:
     cache.set(otp_key(email), data, OTP_TTL)
     return data["attempts"]
 
-def set_cooldown(email: str):
-    cache.set(otp_cooldown_key(email), True, OTP_COOLDOWN)
+def set_cooldown(email: str, seconds: int = 60) -> None:
+    cache.set(otp_cooldown_key(email), True, timeout=seconds)
 
 def in_cooldown(email: str) -> bool:
-    return cache.get(otp_cooldown_key(email)) is not Nones
+    return cache.get(otp_cooldown_key(email)) is not None
