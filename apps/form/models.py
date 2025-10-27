@@ -43,7 +43,7 @@ class Form(models.Model):
         related_name='forms',
         )
     is_public = models.BooleanField(default=False)
-    access_password_hash = models.CharField(max_length=128, blank=True)
+    access_password_hash = models.CharField(max_length=128)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -67,7 +67,7 @@ class Process(models.Model):
         related_name='processes',
         )
     is_public = models.BooleanField(default=False)
-    access_password_hash = models.CharField(max_length=128, blank=True)
+    access_password_hash = models.CharField(max_length=128)
     process_type = models.CharField(max_length=20, choices=PROCESS_TYPE_CHOICES, default='linear')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
