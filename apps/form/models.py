@@ -1,5 +1,6 @@
 from django.db import models
 import uuid
+from django.conf import settings
 
 # Create your models here.
 
@@ -8,7 +9,7 @@ import uuid
 class Category(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField(null=True, blank=True)
-    owner = models.ForeignKey(to='account.User', on_delete=models.CASCADE, related_name='categories')
+    owner = models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='categories')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -35,7 +36,7 @@ class ProcessForm(models.Model):
 class Form(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField(null=True, blank=True)
-    creator = models.ForeignKey(to='account.User', on_delete=models.CASCADE, related_name='forms')
+    creator = models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='processes')
     category = models.ForeignKey(
         to='Category', 
         on_delete=models.SET_NULL, 
@@ -43,7 +44,7 @@ class Form(models.Model):
         related_name='forms',
         )
     is_public = models.BooleanField(default=False)
-    access_password_hash = models.CharField(max_length=128, blank=True)
+    access_password_hash = models.CharField(max_length=128, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -59,7 +60,7 @@ class Process(models.Model):
     forms = models.ManyToManyField(to='Form', through='ProcessForm', related_name='processes')
     name = models.CharField(max_length=255)
     description = models.TextField(null=True, blank=True)
-    creator = models.ForeignKey(to='account.User', on_delete=models.CASCADE, related_name='processes')
+    creator = models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='processes')
     category = models.ForeignKey(
         to='Category', 
         on_delete=models.SET_NULL, 
@@ -104,7 +105,7 @@ class ResponseSession(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     process = models.ForeignKey(to='Process', on_delete=models.CASCADE, related_name='response_sessions')
     responder = models.ForeignKey(
-        to='account.User', 
+        to=settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE, 
         related_name='response_sessions',
         )
