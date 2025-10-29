@@ -7,7 +7,9 @@ from form.models import (
     Question,
 )
 
-
+# --------------------------------------------
+# (Process Detail)
+# --------------------------------------------
 class QuestionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
@@ -40,6 +42,9 @@ class ProcessDetailSerializer(serializers.ModelSerializer):
         ]
 
 
+# --------------------------------------------
+# (Process Welcome Page)
+# --------------------------------------------
 class ProcessWelcomeSerializer(serializers.ModelSerializer):
     title = serializers.CharField(source='name', read_only=True)
 

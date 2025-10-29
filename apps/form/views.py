@@ -6,6 +6,9 @@ from form.models import Process
 
 # Create your views here.
 
+# --------------------------------------------
+# (Process Detail)
+# --------------------------------------------
 class ProcessDetailView(generics.RetrieveAPIView):
     serializer_class = ProcessDetailSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -16,7 +19,9 @@ class ProcessDetailView(generics.RetrieveAPIView):
             models.Q(is_public=True) | models.Q(creator=user)
         )
 
-
+# --------------------------------------------
+# (Process Welcome Page)
+# --------------------------------------------
 class ProcessWelcomeView(generics.RetrieveAPIView):
     serializer_class = ProcessWelcomeSerializer
     permission_classes = [permissions.IsAuthenticated]
