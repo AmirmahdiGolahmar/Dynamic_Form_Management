@@ -16,7 +16,7 @@ class QuestionSerializer(serializers.ModelSerializer):
 
 class FormSerializer(serializers.ModelSerializer):
     questions = QuestionSerializer(many=True, read_only=True)
-    category_name = serializers.CharField(soruce='category.name', read_only=True)
+    category_name = serializers.CharField(source='category.name', read_only=True)
 
     class Meta:
         model = Form
