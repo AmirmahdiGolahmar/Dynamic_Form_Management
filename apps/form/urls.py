@@ -4,4 +4,5 @@ from form import views
 
 urlpatterns = [
     path('processes/<int:id>/', views.ProcessDetailView.as_view(), name='process-detail'),
+    path('process/build/', views.ProcessBuildView.as_view(), name='process-build'),
 ]
