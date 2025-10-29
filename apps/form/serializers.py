@@ -16,7 +16,7 @@ class QuestionSerializer(serializers.ModelSerializer):
 
 class FormSerializer(serializers.ModelSerializer):
     questions = QuestionSerializer(many=True, read_only=True)
-    category_name = serializers.CharField(soruce='category.name', read_only=True)
+    category_name = serializers.CharField(source='category.name', read_only=True)
 
     class Meta:
         model = Form
@@ -38,3 +38,11 @@ class ProcessDetailSerializer(serializers.ModelSerializer):
             'is_public', 'created_at', 'updated_at',
             'category_name', 'creator_name', 'forms'
         ]
+
+
+class ProcessWelcomeSerializer(serializers.ModelSerializer):
+    title = serializers.CharField(source='name', read_only=True)
+
+    class Meta:
+        model = Process
+        fields = ['id', 'title']
