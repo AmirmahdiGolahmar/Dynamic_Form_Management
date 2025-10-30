@@ -22,7 +22,7 @@ import environ
 # ---------------------------------
 BASE_DIR = Path(__file__).resolve().parent.parent
 env = environ.Env()
-env.read_env(os.path.join(BASE_DIR, "../.env"))
+env.read_env(os.path.join(BASE_DIR, "../.env.dev"))
 
 # ---------------------------------
 # Environment Loading
@@ -35,8 +35,8 @@ dotenv.load_dotenv(os.path.join(BASE_DIR.parent, ENV_FILE))
 # Basic Django Config
 # ---------------------------------
 SECRET_KEY = os.getenv('SECRET_KEY', 'fallback_secret_key')
-# DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
+# DEBUG = True
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
 
 
@@ -103,9 +103,9 @@ CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
          "LOCATION": f"redis://{os.getenv('REDIS_HOST', 'localhost')}:{os.getenv('REDIS_PORT', 6379)}/1",
-         "OPTIONS": {
-             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-         }
+         # "OPTIONS": {
+         #     "CLIENT_CLASS": "django_redis.client.DefaultClient",
+         # }
     }
 }
 
