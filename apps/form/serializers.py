@@ -54,3 +54,11 @@ class ProcessEndSerializer(serializers.ModelSerializer):
     class Meta:
         model = Process
         fields = ['id', 'title']
+
+
+class ProcessSubmitSerializer(serializers.ModelSerializer):
+    title = serializers.CharField(source='name', read_only=True)
+
+    class Meta:
+        model = Process
+        fields = ['id', 'title']
