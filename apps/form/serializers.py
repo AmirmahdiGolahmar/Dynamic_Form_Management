@@ -46,3 +46,11 @@ class ProcessWelcomeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Process
         fields = ['id', 'title']
+
+
+
+class ProcessEndSerializer(serializers.ModelSerializer):
+    title = serializers.CharField(source='name', read_only=True)
+    class Meta:
+        model = Process
+        fields = ['id', 'title']

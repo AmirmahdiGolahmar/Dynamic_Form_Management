@@ -1,7 +1,7 @@
 from django.db import models
 from rest_framework import generics
 from rest_framework import permissions
-from form.serializers import ProcessDetailSerializer,ProcessWelcomeSerializer
+from form.serializers import ProcessDetailSerializer,ProcessWelcomeSerializer,ProcessEndSerializer
 from form.models import Process
 
 # Create your views here.
@@ -19,6 +19,19 @@ class ProcessDetailView(generics.RetrieveAPIView):
 
 class ProcessWelcomeView(generics.RetrieveAPIView):
     serializer_class = ProcessWelcomeSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    lookup_field = 'id'
+
+    def get_queryset(self):
+        user = self.request.user
+        return Process.objects.filter(
+            models.Q(is_public=True) | models.Q(creator=user)
+        )
+    
+
+
+class ProcessEndView(generics.RetrieveAPIView):
+    serializer_class = ProcessEndSerializer
     permission_classes = [permissions.IsAuthenticated]
     lookup_field = 'id'
 
