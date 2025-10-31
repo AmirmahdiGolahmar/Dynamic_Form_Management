@@ -48,7 +48,7 @@ class EmailOTPRequestView(APIView):
         ser = EmailOTPRequestSerializer(data=request.data)
         ser.is_valid(raise_exception=True)
         data = ser.save()
-        return Response(data, status=status.HTTP_200_OK)
+        return Response({"data" : data, "hhhhhhhhhhhhhhhhhhhhhhi" : 1}, status=status.HTTP_200_OK)
 
 class EmailOTPVerifyView(APIView):
     permission_classes = [permissions.AllowAny]

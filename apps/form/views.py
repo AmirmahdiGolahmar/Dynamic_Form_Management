@@ -1,3 +1,5 @@
+# views.py
+from .permissions import IsAuthenticatedFormOwner, IsAuthenticatedCategoryOwner
 from django.db import models
 from rest_framework import generics
 from rest_framework import permissions
@@ -7,14 +9,44 @@ from form.serializers import (
     ProcessWelcomeSerializer,
     ProcessEndSerializer,
     ProcessSubmitSerializer, 
-    ProcessSettingsSerializer
+    ProcessSettingsSerializer,
+    FormSerializer,
+    CategorySerializer,
 )
 from rest_framework import status
 from rest_framework.response import Response
+from rest_framework.response import mixins
+from rest_framework.response import filters
 from rest_framework.views import APIView
 from django.db.models import Count, Avg
-from .models import Process, ProcessForm, Form, ResponseSession
+from .models import Process, ProcessForm, Form, ResponseSession, Category
 from rest_framework import viewsets
+
+
+
+class CategoryViewSet(mixins.ListModelMixin,
+                      mixins.RetrieveModelMixin,
+                      mixins.CreateModelMixin,
+                      mixins.UpdateModelMixin,
+                      mixins.DestroyModelMixin,
+                      viewsets.GenericViewSet):
+    """CRUD for user's own categories."""
+    serializer_class = CategorySerializer
+    permission_classes = [IsAuthenticatedCategoryOwner]
+    http_method_names = ['get', 'post', 'put', 'patch', 'delete']
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['name', 'description']
+
+    def get_queryset(self):
+        user = self.request.user
+        if not user or not user.is_authenticated:
+            return Category.objects.none()
+        return Category.objects.filter(owner=user).order_by('-created_at')
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
+
+
 
 
 

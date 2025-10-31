@@ -9,6 +9,26 @@ from form.models import (
 )
 
 
+
+class CategorySerializer(serializers.ModelSerializer):
+    owner = serializers.StringRelatedField(read_only=True)
+
+    class Meta:
+        model = Category
+        fields = [
+            'id',
+            'name',           # input
+            'description',    # input
+            'owner',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['id', 'owner', 'created_at', 'updated_at']
+
+
+
+
+
 # --------------------------------------------
 # (Process Detail)
 # --------------------------------------------
@@ -18,7 +38,7 @@ class QuestionSerializer(serializers.ModelSerializer):
         model = Question
         fields = ['id', 'question_text', 'question_info', 'is_required', 'order_index']
 
-
+FormSerializer
 class FormSerializer(serializers.ModelSerializer):
     # Each form can have one question (one-to-one)
     question = QuestionSerializer(read_only=True)
