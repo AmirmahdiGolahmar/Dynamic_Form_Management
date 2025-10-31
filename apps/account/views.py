@@ -17,9 +17,18 @@ class RegisterView(APIView):
         user = ser.save()
         return Response({"message": "Registered successfully."}, status=status.HTTP_201_CREATED)
 
-from rest_framework_simplejwt.views import TokenObtainPairView
-from rest_framework_simplejwt.settings import api_settings
-from datetime import timedelta
+class LogoutView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        response = Response({"message": "Logged out successfully"}, status=status.HTTP_200_OK)
+
+        # delete cookies
+        response.delete_cookie("access_token", path="/")
+        response.delete_cookie("refresh_token", path="/")
+
+        return response
+
 
 class LoginView(TokenObtainPairView):
     serializer_class = LoginSerializer
