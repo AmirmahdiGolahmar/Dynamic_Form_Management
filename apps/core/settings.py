@@ -78,8 +78,8 @@ REST_FRAMEWORK = {
         "account.throttling.OTPEmailThrottle"
     ),
     "DEFAULT_THROTTLE_RATES": {
-        "otp_anon":  "10/hour",
-        "otp_email": "30/hour",
+        "otp_anon":  "1000/day",
+        "otp_email": "100/day",
     },
 }
 
@@ -103,9 +103,9 @@ CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
          "LOCATION": f"redis://{os.getenv('REDIS_HOST', 'localhost')}:{os.getenv('REDIS_PORT', 6379)}/1",
-         "OPTIONS": {
-             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-         }
+        #  "OPTIONS": {
+        #      "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        #  }
     }
 }
 

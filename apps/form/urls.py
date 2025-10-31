@@ -1,8 +1,7 @@
-from django.urls import path
 from form import views
+from rest_framework.routers import DefaultRouter
 
 
-urlpatterns = [
-    path('processes/<int:id>/', views.ProcessDetailView.as_view(), name='process-detail'),
-    path('process/build/', views.ProcessBuildView.as_view(), name='process-build'),
-]
+router = DefaultRouter()
+router.register(r'processes', views.ProcessViewSet, basename='process')
+urlpatterns = router.urls

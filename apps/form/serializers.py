@@ -20,14 +20,15 @@ class QuestionSerializer(serializers.ModelSerializer):
 
 
 class FormSerializer(serializers.ModelSerializer):
-    questions = QuestionSerializer(many=True, read_only=True)
+    # Each form can have one question (one-to-one)
+    question = QuestionSerializer(read_only=True)
     category_name = serializers.CharField(source='category.name', read_only=True)
 
     class Meta:
         model = Form
         fields = [
             'id', 'title', 'description', 'category_name',
-            'is_public', 'created_at', 'updated_at', 'questions'
+            'is_public', 'created_at', 'updated_at', 'question'
         ]
 
 
@@ -46,38 +47,33 @@ class ProcessDetailSerializer(serializers.ModelSerializer):
 
 
 # --------------------------------------------
-# (Process Build)
+# (Process Build / Create)
 # --------------------------------------------
 
 class ProcessFormInputSerializer(serializers.Serializer):
-    """Used for creating process-forms relations"""
     form_id = serializers.IntegerField()
     order_index = serializers.IntegerField()
 
 
 class ProcessBuildSerializer(serializers.ModelSerializer):
-    """Used for creating a new process along with related forms"""
-    forms = ProcessFormInputSerializer(many=True, write_only=True)
+    forms = ProcessFormInputSerializer(many=True, write_only=True, required=False)
 
     class Meta:
         model = Process
         fields = [
-            'name', 'description', 'category',
+           'id', 'name', 'description', 'category',
             'is_public', 'access_password_hash',
             'process_type', 'forms'
         ]
-    
+
     def create(self, validated_data):
         forms_data = validated_data.pop('forms', [])
         user = self.context['request'].user
         process = Process.objects.create(creator=user, **validated_data)
-
-        # Link forms to process
         for form_data in forms_data:
             ProcessForm.objects.create(
                 process=process,
                 form_id=form_data['form_id'],
                 order_index=form_data['order_index']
             )
-
         return process
