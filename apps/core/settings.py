@@ -13,12 +13,16 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 from pathlib import Path
 import os
 import dotenv
+import environ
+
 
 
 # ---------------------------------
 # Base Directory
 # ---------------------------------
 BASE_DIR = Path(__file__).resolve().parent.parent
+env = environ.Env()
+env.read_env(os.path.join(BASE_DIR, "../.env"))
 
 # ---------------------------------
 # Environment Loading
@@ -31,7 +35,8 @@ dotenv.load_dotenv(os.path.join(BASE_DIR.parent, ENV_FILE))
 # Basic Django Config
 # ---------------------------------
 SECRET_KEY = os.getenv('SECRET_KEY', 'fallback_secret_key')
-DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
+# DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
+DEBUG = True
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
 
 
@@ -44,6 +49,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    "rest_framework",
+    "rest_framework_simplejwt",
     'account',
     'form',
     'report',
@@ -58,6 +65,50 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+AUTH_USER_MODEL = "account.User"
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
+    #"DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.AllowAny",),
+    "DEFAULT_THROTTLE_CLASSES": (
+        "account.throttling.OTPAnonThrottle",
+        "account.throttling.OTPEmailThrottle"
+    ),
+    "DEFAULT_THROTTLE_RATES": {
+        "otp_anon":  "10/hour",
+        "otp_email": "30/hour",
+    },
+}
+
+from datetime import timedelta
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "AUTH_HEADER_TYPES": ("Bearer",),
+}
+
+
+EMAIL_BACKEND = env("EMAIL_BACKEND", default="django.core.mail.backends.smtp.EmailBackend")
+EMAIL_HOST = env("EMAIL_HOST", default="")
+EMAIL_PORT = env.int("EMAIL_PORT", default=587)
+EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
+EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="amirmahdigolahmar@gmail.com")
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+         "LOCATION": f"redis://{os.getenv('REDIS_HOST', 'localhost')}:{os.getenv('REDIS_PORT', 6379)}/1",
+         "OPTIONS": {
+             "CLIENT_CLASS": "django_redis.client.DefaultClient",
+         }
+    }
+}
+
 
 ROOT_URLCONF = 'core.urls'
 
