@@ -77,3 +77,40 @@ class ProcessBuildSerializer(serializers.ModelSerializer):
                 order_index=form_data['order_index']
             )
         return process
+class ProcessWelcomeSerializer(serializers.ModelSerializer):
+    title = serializers.CharField(source='name', read_only=True)
+
+    class Meta:
+        model = Process
+        fields = ['id', 'title']
+
+
+
+class ProcessEndSerializer(serializers.ModelSerializer):
+    title = serializers.CharField(source='name', read_only=True)
+    class Meta:
+        model = Process
+        fields = ['id', 'title']
+
+
+class ProcessSubmitSerializer(serializers.ModelSerializer):
+    title = serializers.CharField(source='name', read_only=True)
+
+    class Meta:
+        model = Process
+        fields = ['id', 'title']
+
+
+class ProcessSettingsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Process
+        fields = ['process_type', 'is_public', 'access_password_hash']
+        extra_kwargs = {
+            'access_password_hash': {'write_only': True, 'required': False},
+        }
+
+    def validate(self, data):
+        if not data.get('is_public', True) and not data.get('access_password_hash'):
+            raise serializers.ValidationError("Private process must have a password.")
+        return data
+ 
