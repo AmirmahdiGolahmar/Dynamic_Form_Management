@@ -36,10 +36,9 @@ class FormAdmin(admin.ModelAdmin):
 
 @admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
-    list_display = ('form', 'question_text', 'is_required', 'order_index', 'created_at')
+    list_display = ('form', 'question_text', 'is_required', 'created_at')
     search_fields = ('question_text', 'form__title')
     list_filter = ('is_required',)
-    ordering = ('order_index',)
 
 
 @admin.register(ResponseSession)

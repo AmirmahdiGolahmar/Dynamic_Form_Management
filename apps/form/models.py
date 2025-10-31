@@ -89,7 +89,7 @@ class Question(models.Model):
     question_text = models.TextField()
     question_info = models.JSONField()  # type, options, etc.
     is_required = models.BooleanField(default=False)
-    order_index = models.PositiveIntegerField()
+    # order_index = models.PositiveIntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

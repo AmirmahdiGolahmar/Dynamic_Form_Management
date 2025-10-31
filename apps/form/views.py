@@ -73,6 +73,14 @@ class FormDetailUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [permissions.IsAuthenticated, IsFormOwnerOrAdmin]
     lookup_field = 'id'
 
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response(
+            {'message': 'Process deleted successfully.'},
+            status=status.HTTP_204_NO_CONTENT,
+        )
+
     def get_queryset(self):
         user = self.request.user
         qs = Form.objects.select_related('creator', 'category')

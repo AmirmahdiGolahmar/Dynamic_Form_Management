@@ -52,7 +52,7 @@ def validate_question_info_schema(info: dict):
 class QuestionInlineSerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
-        fields = ['question_text', 'question_info', 'is_required', 'order_index']
+        fields = ['question_text', 'question_info', 'is_required']
 
     def validate_question_info(self, value):
         return validate_question_info_schema(value)
@@ -68,7 +68,7 @@ class FormCreateUpdateSerializer(serializers.ModelSerializer):
     - 'access_password' (plain text) is optional; hashed internally.
     - Inline 'question' (OneToOne) creation/update is supported.
     """
-    access_password = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    access_password = serializers.CharField(write_only=True, required=False, allow_blank=True, allow_null=True)
     question = QuestionInlineSerializer(write_only=True, required=False)
 
     class Meta:
@@ -142,7 +142,7 @@ class FormCreateUpdateSerializer(serializers.ModelSerializer):
 class QuestionReadSerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
-        fields = ['id', 'question_text', 'question_info', 'is_required', 'order_index', 'created_at', 'updated_at']
+        fields = ['id', 'question_text', 'question_info', 'is_required', 'created_at', 'updated_at']
 
 
 class FormDetailSerializer(serializers.ModelSerializer):
@@ -196,7 +196,7 @@ class CategorySerializer(serializers.ModelSerializer):
 class QuestionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
-        fields = ['id', 'question_text', 'question_info', 'is_required', 'order_index']
+        fields = ['id', 'question_text', 'question_info', 'is_required']
 
 
 class FormSerializer(serializers.ModelSerializer):
