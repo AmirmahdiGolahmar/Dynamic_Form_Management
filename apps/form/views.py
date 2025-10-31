@@ -1,9 +1,66 @@
-from rest_framework import generics, permissions, status
+from django.db import models
+from rest_framework import generics
+from rest_framework import permissions
+from rest_framework import status
+from form.serializers import ProcessDetailSerializer,ProcessWelcomeSerializer,ProcessEndSerializer,ProcessSubmitSerializer, ProcessSettingsSerializer
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.db.models import Count, Avg
 from .models import Process, ProcessForm, Form, ResponseSession
-from .serializers import ProcessSettingsSerializer
+
+
+# Create your views here.
+
+class ProcessDetailView(generics.RetrieveAPIView):
+    serializer_class = ProcessDetailSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    lookup_field = 'id'
+    def get_queryset(self):
+        user = self.request.user
+        return Process.objects.filter(
+            models.Q(is_public=True) | models.Q(creator=user)
+        )
+
+
+class ProcessWelcomeView(generics.RetrieveAPIView):
+    serializer_class = ProcessWelcomeSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    lookup_field = 'id'
+
+    def get_queryset(self):
+        user = self.request.user
+        return Process.objects.filter(
+            models.Q(is_public=True) | models.Q(creator=user)
+        )
+    
+
+
+class ProcessEndView(generics.RetrieveAPIView):
+    serializer_class = ProcessEndSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    lookup_field = 'id'
+
+    def get_queryset(self):
+        user = self.request.user
+        return Process.objects.filter(
+            models.Q(is_public=True) | models.Q(creator=user)
+        )
+    
+
+
+
+
+class ProcessSubmitView(generics.RetrieveAPIView):
+    serializer_class = ProcessSubmitSerializer
+    permission_classes = [permissions.IsAuthenticated]  # یا AllowAny اگر عمومی می‌خوای
+    lookup_field = 'id'
+
+    def get_queryset(self):
+        user = self.request.user
+        return Process.objects.filter(
+            models.Q(is_public=True) | models.Q(creator=user)
+        )
+
 
 
 
