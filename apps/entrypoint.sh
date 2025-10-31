@@ -1,12 +1,9 @@
-#!/bin/bash
+#!/bin/sh
+# exit on error
+set -e
 
-echo "Waiting for database..."
-while ! nc -z db 5432; do
-    sleep 0.1
-done
+echo "Running migrations..."
+python manage.py migrate --noinput
 
-echo "Database ready!"
-
-
-python manage.py migrate
-python manage.py runserver 0.0.0.0:8000
+echo "Starting Django API server..."
+exec python manage.py runserver 0.0.0.0:8000
