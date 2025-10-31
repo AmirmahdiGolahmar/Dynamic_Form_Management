@@ -78,8 +78,8 @@ REST_FRAMEWORK = {
         "account.throttling.OTPEmailThrottle"
     ),
     "DEFAULT_THROTTLE_RATES": {
-        "otp_anon":  "10/hour",
-        "otp_email": "30/hour",
+        "otp_anon":  "1000/day",
+        "otp_email": "100/day",
     },
 }
 

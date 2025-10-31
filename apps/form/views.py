@@ -1,25 +1,74 @@
 from django.db import models
 from rest_framework import generics
 from rest_framework import permissions
+from form.serializers import (
+    ProcessDetailSerializer,
+    ProcessBuildSerializer,
+    ProcessWelcomeSerializer,
+    ProcessEndSerializer,
+    ProcessSubmitSerializer, 
+    ProcessSettingsSerializer
+)
 from rest_framework import status
-from form.serializers import ProcessDetailSerializer,ProcessWelcomeSerializer,ProcessEndSerializer,ProcessSubmitSerializer, ProcessSettingsSerializer
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.db.models import Count, Avg
 from .models import Process, ProcessForm, Form, ResponseSession
+from rest_framework import viewsets
+
 
 
 # Create your views here.
 
-class ProcessDetailView(generics.RetrieveAPIView):
-    serializer_class = ProcessDetailSerializer
+# # --------------------------------------------
+# # (Process Detail)
+# # --------------------------------------------
+# class ProcessDetailView(generics.RetrieveAPIView):
+#     serializer_class = ProcessDetailSerializer
+#     permission_classes = [permissions.IsAuthenticated]
+#     lookup_field = 'id'
+#     def get_queryset(self):s
+#         user = self.request.user
+#         return Process.objects.filter(
+#             models.Q(is_public=True) | models.Q(creator=user)
+#         )
+    
+
+
+# # --------------------------------------------
+# # (Process Build)
+# # --------------------------------------------
+
+
+# class ProcessBuildView(generics.CreateAPIView):
+#     serializer_class = ProcessBuildSerializer
+#     permission_classes = [permissions.IsAuthenticated]
+
+#     def get_queryset(self):
+#         return Process.objects.filter(creator=self.request.user)
+
+class ProcessViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
     lookup_field = 'id'
+
     def get_queryset(self):
         user = self.request.user
         return Process.objects.filter(
             models.Q(is_public=True) | models.Q(creator=user)
         )
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response(
+            {'message': 'Process deleted successfully.'},
+            status=status.HTTP_204_NO_CONTENT,
+        )
+
+    def get_serializer_class(self):
+        if self.action in ['create', 'update', 'partial_update']:
+            return ProcessBuildSerializer
+        return ProcessDetailSerializer
 
 
 class ProcessWelcomeView(generics.RetrieveAPIView):
@@ -64,28 +113,10 @@ class ProcessSubmitView(generics.RetrieveAPIView):
 
 
 
-class ProcessSettingsUpdateView(generics.UpdateAPIView):
-    queryset = Process.objects.all()
-    serializer_class = ProcessSettingsSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        user = self.request.user
-        return Process.objects.filter(creator=user)
 
 
 
-class ProcessDeleteView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
 
-    def delete(self, request, pk):
-        try:
-            process = Process.objects.get(pk=pk, creator=request.user)
-        except Process.DoesNotExist:
-            return Response({'error': 'No Process matches the given query.'}, status=404)
-
-        process.delete()
-        return Response({'message': 'Process and its form mappings deleted successfully.'}, status=200)
 
 
 class UserDashboardView(APIView):
