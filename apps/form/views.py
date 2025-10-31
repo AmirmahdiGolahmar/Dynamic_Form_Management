@@ -15,8 +15,8 @@ from form.serializers import (
 )
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework.response import mixins
-from rest_framework.response import filters
+from rest_framework import mixins
+from rest_framework import filters
 from rest_framework.views import APIView
 from django.db.models import Count, Avg
 from .models import Process, ProcessForm, Form, ResponseSession, Category
@@ -48,36 +48,6 @@ class CategoryViewSet(mixins.ListModelMixin,
 
 
 
-
-
-# Create your views here.
-
-# # --------------------------------------------
-# # (Process Detail)
-# # --------------------------------------------
-# class ProcessDetailView(generics.RetrieveAPIView):
-#     serializer_class = ProcessDetailSerializer
-#     permission_classes = [permissions.IsAuthenticated]
-#     lookup_field = 'id'
-#     def get_queryset(self):s
-#         user = self.request.user
-#         return Process.objects.filter(
-#             models.Q(is_public=True) | models.Q(creator=user)
-#         )
-    
-
-
-# # --------------------------------------------
-# # (Process Build)
-# # --------------------------------------------
-
-
-# class ProcessBuildView(generics.CreateAPIView):
-#     serializer_class = ProcessBuildSerializer
-#     permission_classes = [permissions.IsAuthenticated]
-
-#     def get_queryset(self):
-#         return Process.objects.filter(creator=self.request.user)
 
 class ProcessViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
@@ -141,15 +111,6 @@ class ProcessSubmitView(generics.RetrieveAPIView):
         return Process.objects.filter(
             models.Q(is_public=True) | models.Q(creator=user)
         )
-
-
-
-
-
-
-
-
-
 
 class UserDashboardView(APIView):
     permission_classes = [permissions.IsAuthenticated]

@@ -1,0 +1,820 @@
+openapi: 3.0.3
+info:
+  title: Your Project API
+  version: 1.0.0
+  description: Your project description
+paths:
+  /api/auth/login/:
+    post:
+      operationId: auth_login_create
+      description: |-
+        POST body can be:
+          { "username": "...", "password": "..." }
+          { "phone": "0912...", "password": "..." }
+          { "identifier": "+98912...", "password": "..." }
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Login'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Login'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Login'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Login'
+          description: ''
+  /api/auth/me/:
+    get:
+      operationId: auth_me_retrieve
+      tags:
+      - auth
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    patch:
+      operationId: auth_me_partial_update
+      tags:
+      - auth
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/auth/otp/request/:
+    post:
+      operationId: auth_otp_request_create
+      tags:
+      - auth
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/auth/otp/verify/:
+    post:
+      operationId: auth_otp_verify_create
+      tags:
+      - auth
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/auth/refresh/:
+    post:
+      operationId: auth_refresh_create
+      description: |-
+        Takes a refresh type JSON web token and returns an access type JSON web
+        token if the refresh token is valid.
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenRefresh'
+          description: ''
+  /api/auth/register/:
+    post:
+      operationId: auth_register_create
+      tags:
+      - auth
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/auth/token/:
+    post:
+      operationId: auth_token_create
+      description: |-
+        Takes a set of user credentials and returns an access and refresh JSON web
+        token pair to prove the authentication of those credentials.
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenPair'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenPair'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenPair'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenPair'
+          description: ''
+  /api/form/categories/:
+    get:
+      operationId: form_categories_list
+      description: CRUD for user's own categories.
+      parameters:
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - form
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Category'
+          description: ''
+    post:
+      operationId: form_categories_create
+      description: CRUD for user's own categories.
+      tags:
+      - form
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Category'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Category'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Category'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+          description: ''
+  /api/form/categories/{id}/:
+    get:
+      operationId: form_categories_retrieve
+      description: CRUD for user's own categories.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this category.
+        required: true
+      tags:
+      - form
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+          description: ''
+    put:
+      operationId: form_categories_update
+      description: CRUD for user's own categories.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this category.
+        required: true
+      tags:
+      - form
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Category'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Category'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Category'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+          description: ''
+    patch:
+      operationId: form_categories_partial_update
+      description: CRUD for user's own categories.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this category.
+        required: true
+      tags:
+      - form
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCategory'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCategory'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCategory'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+          description: ''
+    delete:
+      operationId: form_categories_destroy
+      description: CRUD for user's own categories.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this category.
+        required: true
+      tags:
+      - form
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/form/process/{id}/end/:
+    get:
+      operationId: form_process_end_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - form
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcessEnd'
+          description: ''
+  /api/form/process/{id}/submit/:
+    get:
+      operationId: form_process_submit_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - form
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcessSubmit'
+          description: ''
+  /api/form/process/{id}/welcome/:
+    get:
+      operationId: form_process_welcome_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - form
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcessWelcome'
+          description: ''
+  /api/form/processes/:
+    get:
+      operationId: form_processes_list
+      tags:
+      - form
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProcessDetail'
+          description: ''
+    post:
+      operationId: form_processes_create
+      tags:
+      - form
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProcessBuild'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProcessBuild'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProcessBuild'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcessBuild'
+          description: ''
+  /api/form/processes/{id}/:
+    get:
+      operationId: form_processes_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - form
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcessDetail'
+          description: ''
+    put:
+      operationId: form_processes_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - form
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProcessBuild'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProcessBuild'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProcessBuild'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcessBuild'
+          description: ''
+    patch:
+      operationId: form_processes_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - form
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedProcessBuild'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedProcessBuild'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedProcessBuild'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcessBuild'
+          description: ''
+    delete:
+      operationId: form_processes_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - form
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/form/user/dashboard/:
+    get:
+      operationId: form_user_dashboard_retrieve
+      tags:
+      - form
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+components:
+  schemas:
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          nullable: true
+        owner:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - name
+      - owner
+      - updated_at
+    Form:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+          nullable: true
+        category_name:
+          type: string
+          readOnly: true
+        is_public:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        question:
+          allOf:
+          - $ref: '#/components/schemas/Question'
+          readOnly: true
+      required:
+      - category_name
+      - created_at
+      - id
+      - question
+      - title
+      - updated_at
+    Login:
+      type: object
+      description: |-
+        Accepts either:
+          - username + password
+          - phone + password
+          - identifier + password  (identifier can be username or phone)
+      properties:
+        identifier:
+          type: string
+        username:
+          type: string
+          writeOnly: true
+        password:
+          type: string
+          writeOnly: true
+      required:
+      - password
+      - username
+    PatchedCategory:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          nullable: true
+        owner:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedProcessBuild:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+          nullable: true
+        category:
+          type: integer
+          nullable: true
+        is_public:
+          type: boolean
+        access_password_hash:
+          type: string
+          nullable: true
+          maxLength: 128
+        process_type:
+          $ref: '#/components/schemas/ProcessTypeEnum'
+        forms:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProcessFormInput'
+          writeOnly: true
+    ProcessBuild:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+          nullable: true
+        category:
+          type: integer
+          nullable: true
+        is_public:
+          type: boolean
+        access_password_hash:
+          type: string
+          nullable: true
+          maxLength: 128
+        process_type:
+          $ref: '#/components/schemas/ProcessTypeEnum'
+        forms:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProcessFormInput'
+          writeOnly: true
+      required:
+      - id
+      - name
+    ProcessDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+          nullable: true
+        process_type:
+          $ref: '#/components/schemas/ProcessTypeEnum'
+        is_public:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        category_name:
+          type: string
+          readOnly: true
+        creator_name:
+          type: string
+          readOnly: true
+        forms:
+          type: array
+          items:
+            $ref: '#/components/schemas/Form'
+          readOnly: true
+      required:
+      - category_name
+      - created_at
+      - creator_name
+      - forms
+      - id
+      - name
+      - updated_at
+    ProcessEnd:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - title
+    ProcessFormInput:
+      type: object
+      properties:
+        form_id:
+          type: integer
+        order_index:
+          type: integer
+      required:
+      - form_id
+      - order_index
+    ProcessSubmit:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - title
+    ProcessTypeEnum:
+      enum:
+      - linear
+      - free
+      type: string
+      description: |-
+        * `linear` - Linear
+        * `free` - Free
+    ProcessWelcome:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - title
+    Question:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        question_text:
+          type: string
+        question_info: {}
+        is_required:
+          type: boolean
+        order_index:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+      required:
+      - id
+      - order_index
+      - question_info
+      - question_text
+    TokenPair:
+      type: object
+      description: |-
+        Accepts:
+          {"username": "...", "password": "..."}  OR
+          {"identifier": "0912... | +98912... | username", "password": "..."}
+      properties:
+        username:
+          type: string
+          writeOnly: true
+        password:
+          type: string
+          writeOnly: true
+      required:
+      - password
+      - username
+    TokenRefresh:
+      type: object
+      properties:
+        access:
+          type: string
+          readOnly: true
+        refresh:
+          type: string
+          writeOnly: true
+      required:
+      - access
+      - refresh
+  securitySchemes:
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
