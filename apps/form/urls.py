@@ -16,6 +16,7 @@ urlpatterns = [
     path('process/<int:id>/welcome/', views.ProcessWelcomeView.as_view(), name='process-welcome'),
     path('process/<int:id>/end/', views.ProcessEndView.as_view(), name='process-end'),
     path('process/<int:id>/submit/', views.ProcessSubmitView.as_view(), name='process-submit'),
+
     path('user/dashboard/', views.UserDashboardView.as_view(), name='user-dashboard'),
     path('forms/', views.FormListCreateView.as_view(), name='form-list-create'),
     path('forms/<int:id>/', views.FormDetailUpdateDeleteView.as_view(), name='form-detail-update-delete'),
