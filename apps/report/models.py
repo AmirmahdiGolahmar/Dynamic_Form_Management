@@ -116,7 +116,7 @@ class Report(models.Model):
     data = models.JSONField(default=dict)
     note = models.TextField(null=True, blank=True)
 
-    genearted_at = models.DateTimeField(default=timezone.now)
+    generated_at = models.DateTimeField(default=timezone.now)
 
     created_by = models.ForeignKey(
         'account.User',

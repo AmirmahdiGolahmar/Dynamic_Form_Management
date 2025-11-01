@@ -44,6 +44,9 @@ class LoginView(TokenObtainPairView):
         response.data.pop("access", None)
         response.data.pop("refresh", None)
 
+        response.data['message'] = 'Login successful.'
+        response.data['user'] = MeSerializer(request.user).data
+
         # Optional: lifespan
         access_lifetime = api_settings.ACCESS_TOKEN_LIFETIME or timedelta(minutes=5)
         refresh_lifetime = api_settings.REFRESH_TOKEN_LIFETIME or timedelta(days=1)
@@ -96,7 +99,7 @@ class EmailOTPRequestView(APIView):
         ser = EmailOTPRequestSerializer(data=request.data)
         ser.is_valid(raise_exception=True)
         data = ser.save()
-        return Response({"data" : data, "hhhhhhhhhhhhhhhhhhhhhhi" : 1}, status=status.HTTP_200_OK)
+        return Response({"data" : data}, status=status.HTTP_200_OK)
 
 class EmailOTPVerifyView(APIView):
     permission_classes = [permissions.AllowAny]
