@@ -10,7 +10,6 @@ from form.models import (
 from django.contrib.auth.hashers import make_password
 
 
-
 def validate_question_info_schema(info: dict):
     """Validate structure and logic of question_info JSON."""
     if not isinstance(info, dict):
@@ -177,8 +176,8 @@ class CategorySerializer(serializers.ModelSerializer):
         model = Category
         fields = [
             'id',
-            'name',           # input
-            'description',    # input
+            'name',
+            'description',
             'owner',
             'created_at',
             'updated_at',
@@ -186,13 +185,9 @@ class CategorySerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'owner', 'created_at', 'updated_at']
 
 
-
-
-
 # --------------------------------------------
 # (Process Detail)
 # --------------------------------------------
-
 class QuestionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
@@ -229,7 +224,6 @@ class ProcessDetailSerializer(serializers.ModelSerializer):
 # --------------------------------------------
 # (Process Build / Create)
 # --------------------------------------------
-
 class ProcessFormInputSerializer(serializers.Serializer):
     form_id = serializers.IntegerField()
     order_index = serializers.IntegerField()
@@ -257,6 +251,11 @@ class ProcessBuildSerializer(serializers.ModelSerializer):
                 order_index=form_data['order_index']
             )
         return process
+
+
+# --------------------------------------------
+# (Process Pages: welcome / end)
+# --------------------------------------------
 class ProcessWelcomeSerializer(serializers.ModelSerializer):
     title = serializers.CharField(source='name', read_only=True)
 
@@ -265,32 +264,47 @@ class ProcessWelcomeSerializer(serializers.ModelSerializer):
         fields = ['id', 'title']
 
 
-
 class ProcessEndSerializer(serializers.ModelSerializer):
     title = serializers.CharField(source='name', read_only=True)
-    class Meta:
-        model = Process
-        fields = ['id', 'title']
-
-
-class ProcessSubmitSerializer(serializers.ModelSerializer):
-    title = serializers.CharField(source='name', read_only=True)
 
     class Meta:
         model = Process
         fields = ['id', 'title']
 
 
-class ProcessSettingsSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Process
-        fields = ['process_type', 'is_public', 'access_password_hash']
-        extra_kwargs = {
-            'access_password_hash': {'write_only': True, 'required': False},
-        }
+# --------------------------------------------
+# (Process Submit: request/response)
+# --------------------------------------------
+class SubmitAnswerItemSerializer(serializers.Serializer):
+    """
+    One answer per Form for this Process.
+    Because Question is OneToOne(Form), we don't need question_id.
+    """
+    form_id = serializers.IntegerField()
+    answer = serializers.JSONField()  # will be stored into Answer.answer_json
 
-    def validate(self, data):
-        if not data.get('is_public', True) and not data.get('access_password_hash'):
-            raise serializers.ValidationError("Private process must have a password.")
-        return data
- 
+
+class ProcessSubmitRequestSerializer(serializers.Serializer):
+    """
+    Incoming payload for submit:
+    {
+      "answers": [
+         {"form_id": 12, "answer": {...}},
+         {"form_id": 15, "answer": "Some text"}
+      ]
+    }
+    """
+    answers = SubmitAnswerItemSerializer(many=True)
+
+    def validate(self, attrs):
+        # Ensure no duplicate form_id in the payload
+        form_ids = [item['form_id'] for item in attrs['answers']]
+        if len(form_ids) != len(set(form_ids)):
+            raise serializers.ValidationError("Duplicate form_id in answers.")
+        return attrs
+
+
+class ProcessSubmitResponseSerializer(serializers.Serializer):
+    session_id = serializers.UUIDField()
+    submitted = serializers.BooleanField()
+    saved_answers = serializers.IntegerField()
