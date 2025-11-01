@@ -9,10 +9,6 @@ class ReportAdmin(admin.ModelAdmin):
         "process",
         "report_type",
         "generated_at",
-        "total_sessions_started",
-        "total_sessions_submitted",
-        "response_rate",
-        "participants_count",
         "created_by",
     )
     list_filter = (
@@ -27,11 +23,6 @@ class ReportAdmin(admin.ModelAdmin):
     )
     readonly_fields = (
         "generated_at",
-        "total_sessions_started",
-        "total_sessions_submitted",
-        "response_rate",
-        "participants_count",
-        "total_answers",
         "data",
     )
     fieldsets = (
@@ -40,11 +31,11 @@ class ReportAdmin(admin.ModelAdmin):
         }),
         ("Statistics", {
             "fields": (
-                "total_sessions_started",
-                "total_sessions_submitted",
-                "response_rate",
-                "participants_count",
-                "total_answers",
+                # "total_sessions_started",
+                # "total_sessions_submitted",
+                # "response_rate",
+                # "participants_count",
+                # "total_answers",
             ),
         }),
         ("Data & Notes", {

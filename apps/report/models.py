@@ -96,21 +96,27 @@ class Report(models.Model):
         on_delete=models.CASCADE,
         related_name='reports'
     )
-    generated_at = models.DateTimeField(default=timezone.now)
+    title = models.CharField(max_length=255, null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
+    # generated_at = models.DateTimeField(default=timezone.now)
     report_type = models.CharField(
         max_length=50,
         choices=REPORT_TYPE_CHOICES,
         default='summary'
     )
 
-    total_sessions_started = models.PositiveIntegerField(default=0)
-    total_sessions_submitted = models.PositiveIntegerField(default=0)
-    response_rate = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
-    participants_count = models.PositiveIntegerField(default=0)
-    total_answers = models.BigIntegerField(default=0)
+    # total_sessions_started = models.PositiveIntegerField(default=0)
+    # total_sessions_submitted = models.PositiveIntegerField(default=0)
+    # response_rate = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    # participants_count = models.PositiveIntegerField(default=0)
+    # total_answers = models.BigIntegerField(default=0)
 
+
+    # core report data (JSON result of analytics)
     data = models.JSONField(default=dict)
     note = models.TextField(null=True, blank=True)
+
+    genearted_at = models.DateTimeField(default=timezone.now)
 
     created_by = models.ForeignKey(
         'account.User',
@@ -127,11 +133,16 @@ class Report(models.Model):
         verbose_name_plural = 'Reports'
 
     def __str__(self):
-        return f"Report ({self.report_type}) for {self.process.name}"
+        title = self.title or f"{self.report_type.capitalize()} Report"
+        return f"{title} for {self.process.name}"
 
-    @property
-    def submission_rate(self):
-        """محاسبه درصد ارسال نسبت به شروع."""
-        if self.total_sessions_started == 0:
-            return 0
-        return round((self.total_sessions_submitted / self.total_sessions_started) * 100, 2)
+    def compute_summary(self):
+        """
+        Optionally compute or format data before saving.
+        Called from the ReportCreateAPIView.
+        """
+        data = self.data or {}
+        data['computed_at'] = timezone.now().isoformat()
+        return data
+
+
