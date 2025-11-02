@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.contrib.auth.hashers import make_password
 from form.models import (
     Form,
     Answer,
@@ -7,9 +8,11 @@ from form.models import (
     Question,
     ProcessForm,
 )
-from django.contrib.auth.hashers import make_password
 
 
+# --------------------------------------------
+# question_info schema validator
+# --------------------------------------------
 def validate_question_info_schema(info: dict):
     """Validate structure and logic of question_info JSON."""
     if not isinstance(info, dict):
@@ -46,7 +49,7 @@ def validate_question_info_schema(info: dict):
 
 
 # --------------------------------------------
-# Question inline serializer (for create/update)
+# Form create/update (با inline question)
 # --------------------------------------------
 class QuestionInlineSerializer(serializers.ModelSerializer):
     class Meta:
@@ -57,15 +60,11 @@ class QuestionInlineSerializer(serializers.ModelSerializer):
         return validate_question_info_schema(value)
 
 
-# --------------------------------------------
-# Form Create/Update Serializer
-# --------------------------------------------
 class FormCreateUpdateSerializer(serializers.ModelSerializer):
     """
-    Used for creating or updating a Form.
-    - 'creator' is inferred from request.
-    - 'access_password' (plain text) is optional; hashed internally.
-    - Inline 'question' (OneToOne) creation/update is supported.
+    - creator از request پر می‌شود.
+    - access_password (plain) اختیاری است و داخل serializer هش می‌شود.
+    - ایجاد/ویرایش inline یک سوال (OneToOne) پشتیبانی می‌شود.
     """
     access_password = serializers.CharField(write_only=True, required=False, allow_blank=True, allow_null=True)
     question = QuestionInlineSerializer(write_only=True, required=False)
@@ -136,7 +135,7 @@ class FormCreateUpdateSerializer(serializers.ModelSerializer):
 
 
 # --------------------------------------------
-# Form Read Serializers
+# Form read
 # --------------------------------------------
 class QuestionReadSerializer(serializers.ModelSerializer):
     class Meta:
@@ -186,7 +185,7 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 # --------------------------------------------
-# (Process Detail)
+# Process detail (برای نمایش)
 # --------------------------------------------
 class QuestionSerializer(serializers.ModelSerializer):
     class Meta:
@@ -195,8 +194,7 @@ class QuestionSerializer(serializers.ModelSerializer):
 
 
 class FormSerializer(serializers.ModelSerializer):
-    # Each form can have one question (one-to-one)
-    question = QuestionSerializer(read_only=True)
+    question = QuestionSerializer(read_only=True)  # OneToOne
     category_name = serializers.CharField(source='category.name', read_only=True)
 
     class Meta:
@@ -222,7 +220,7 @@ class ProcessDetailSerializer(serializers.ModelSerializer):
 
 
 # --------------------------------------------
-# (Process Build / Create)
+# Process build / create
 # --------------------------------------------
 class ProcessFormInputSerializer(serializers.Serializer):
     form_id = serializers.IntegerField()
@@ -235,7 +233,7 @@ class ProcessBuildSerializer(serializers.ModelSerializer):
     class Meta:
         model = Process
         fields = [
-           'id', 'name', 'description', 'category',
+            'id', 'name', 'description', 'category',
             'is_public', 'access_password_hash',
             'process_type', 'forms'
         ]
@@ -254,7 +252,7 @@ class ProcessBuildSerializer(serializers.ModelSerializer):
 
 
 # --------------------------------------------
-# (Process Pages: welcome / end)
+# Process pages: welcome / end (POST-only views use these)
 # --------------------------------------------
 class ProcessWelcomeSerializer(serializers.ModelSerializer):
     title = serializers.CharField(source='name', read_only=True)
@@ -273,31 +271,29 @@ class ProcessEndSerializer(serializers.ModelSerializer):
 
 
 # --------------------------------------------
-# (Process Submit: request/response)
+# Submit: request & response serializers
 # --------------------------------------------
 class SubmitAnswerItemSerializer(serializers.Serializer):
     """
-    One answer per Form for this Process.
-    Because Question is OneToOne(Form), we don't need question_id.
+    One answer per Form within the Process
+    (Question is OneToOne(Form) → question_id is not required).
     """
     form_id = serializers.IntegerField()
-    answer = serializers.JSONField()  # will be stored into Answer.answer_json
+    answer = serializers.JSONField()  # stored as Answer.answer_json
 
 
 class ProcessSubmitRequestSerializer(serializers.Serializer):
     """
-    Incoming payload for submit:
     {
       "answers": [
-         {"form_id": 12, "answer": {...}},
-         {"form_id": 15, "answer": "Some text"}
+        {"form_id": 12, "answer": "text or JSON"},
+        {"form_id": 13, "answer": {"key": "value"}}
       ]
     }
     """
     answers = SubmitAnswerItemSerializer(many=True)
 
     def validate(self, attrs):
-        # Ensure no duplicate form_id in the payload
         form_ids = [item['form_id'] for item in attrs['answers']]
         if len(form_ids) != len(set(form_ids)):
             raise serializers.ValidationError("Duplicate form_id in answers.")
