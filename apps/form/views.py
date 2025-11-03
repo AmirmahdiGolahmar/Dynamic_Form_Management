@@ -155,7 +155,7 @@ class ProcessDetailView(generics.RetrieveAPIView):
 # --------------------------------------------
 # Process pages: Welcome / End (POST-only)
 # --------------------------------------------
-class ProcessWelcomeView(generics.GenericAPIView):
+class ProcessWelcomeView(generics.RetrieveAPIView):
     serializer_class = ProcessWelcomeSerializer
     permission_classes = [permissions.IsAuthenticated]
     lookup_field = 'id'
@@ -166,12 +166,10 @@ class ProcessWelcomeView(generics.GenericAPIView):
             models.Q(is_public=True) | models.Q(creator=user)
         )
 
-    def post(self, request, *args, **kwargs):
-        obj = self.get_object()
-        return Response(self.get_serializer(obj).data)
 
 
-class ProcessEndView(generics.GenericAPIView):
+
+class ProcessEndView(generics.RetrieveAPIView):
     serializer_class = ProcessEndSerializer
     permission_classes = [permissions.IsAuthenticated]
     lookup_field = 'id'
@@ -182,9 +180,6 @@ class ProcessEndView(generics.GenericAPIView):
             models.Q(is_public=True) | models.Q(creator=user)
         )
 
-    def post(self, request, *args, **kwargs):
-        obj = self.get_object()
-        return Response(self.get_serializer(obj).data)
 
 
 # --------------------------------------------
@@ -193,33 +188,26 @@ class ProcessEndView(generics.GenericAPIView):
 class ProcessSubmitView(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]
     lookup_field = 'id'
-    request_serializer_class = ProcessSubmitRequestSerializer
-    response_serializer_class = ProcessSubmitResponseSerializer
+    serializer_class = ProcessSubmitRequestSerializer
 
     def get_queryset(self):
         user = self.request.user
-        return Process.objects.filter(
-            models.Q(is_public=True) | models.Q(creator=user)
-        )
+        return Process.objects.filter(models.Q(is_public=True) | models.Q(creator=user))
 
     def post(self, request, *args, **kwargs):
-        process: Process = self.get_object()
-
-        # اگر خصوصی است و صاحبش نیست:
+        process = self.get_object()
         if not process.is_public and process.creator_id != request.user.id and not request.user.is_staff:
             raise PermissionDenied("You cannot submit answers to this private process.")
 
-        # validate request
-        req_ser = self.request_serializer_class(data=request.data)
-        req_ser.is_valid(raise_exception=True)
-        answers_payload = req_ser.validated_data['answers']
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        answers_payload = serializer.validated_data['answers']
 
-        # تمام فرم‌های همین پروسه
         process_form_ids = set(process.forms.values_list('id', flat=True))
         if not process_form_ids:
             raise ValidationError("This process has no forms to answer.")
 
-        # هر form_id باید متعلق به همین پروسه باشد
+        # Validate all form_ids belong to this process
         for item in answers_payload:
             if item['form_id'] not in process_form_ids:
                 raise ValidationError(f"Form #{item['form_id']} does not belong to this process.")
@@ -233,24 +221,12 @@ class ProcessSubmitView(generics.GenericAPIView):
 
             saved_count = 0
             for item in answers_payload:
-                form_id = item['form_id']
-                answer_json = item['answer']
-
-                try:
-                    question = Question.objects.select_related('form').get(form_id=form_id)
-                except Question.DoesNotExist:
-                    raise ValidationError(f"Form #{form_id} has no question defined.")
-
-                # اگر required است، پاسخ خالی نباشد (چک ساده)
-                if question.is_required:
-                    if answer_json is None or (isinstance(answer_json, str) and not answer_json.strip()):
-                        raise ValidationError(f"Answer for required form #{form_id} cannot be empty.")
-
+                question = Question.objects.get(form_id=item['form_id'])
                 Answer.objects.create(
                     response_session=session,
-                    form_id=form_id,
+                    form_id=item['form_id'],
                     question=question,
-                    answer_json=answer_json,
+                    answer_json=item['answer']
                 )
                 saved_count += 1
 
@@ -258,12 +234,12 @@ class ProcessSubmitView(generics.GenericAPIView):
             session.submitted_at = timezone.now()
             session.save()
 
-        resp = {
+        response_data = {
             "session_id": session.id,
-            "submitted": True,
+            "message": "Submission completed successfully.",
             "saved_answers": saved_count,
         }
-        return Response(self.response_serializer_class(resp).data)
+        return Response(response_data, status=status.HTTP_201_CREATED)
 
 
 # --------------------------------------------

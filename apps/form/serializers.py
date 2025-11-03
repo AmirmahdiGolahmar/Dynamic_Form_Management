@@ -256,45 +256,58 @@ class ProcessBuildSerializer(serializers.ModelSerializer):
 # --------------------------------------------
 class ProcessWelcomeSerializer(serializers.ModelSerializer):
     title = serializers.CharField(source='name', read_only=True)
+    total_forms = serializers.SerializerMethodField()
 
     class Meta:
         model = Process
-        fields = ['id', 'title']
+        fields = ['id', 'title', 'description', 'process_type', 'total_forms']
+    
+    def get_total_forms(self, obj):
+        return obj.forms.count()
+
+    
 
 
 class ProcessEndSerializer(serializers.ModelSerializer):
     title = serializers.CharField(source='name', read_only=True)
+    total_submissions = serializers.SerializerMethodField()
 
     class Meta:
         model = Process
-        fields = ['id', 'title']
+        fields = ['id', 'title', 'description', 'total_submissions']
+    
+    def get_total_submissions(self, obj):
+        return obj.response_sessions.filter(status='submitted').count()
 
 
 # --------------------------------------------
 # Submit: request & response serializers
 # --------------------------------------------
 class SubmitAnswerItemSerializer(serializers.Serializer):
-    """
-    One answer per Form within the Process
-    (Question is OneToOne(Form) → question_id is not required).
-    """
     form_id = serializers.IntegerField()
-    answer = serializers.JSONField()  # stored as Answer.answer_json
+    answer = serializers.JSONField()
+
+    def validate(self, data):
+        form_id = data['form_id']
+        answer = data['answer']
+
+        # Check if form and question exist
+        try:
+            question = Question.objects.get(form_id=form_id)
+        except Question.DoesNotExist:
+            raise serializers.ValidationError(f"Form #{form_id} has no question defined.")
+
+        # Validate required answers
+        if question.is_required and (answer is None or answer == "" or answer == {}):
+            raise serializers.ValidationError(f"Answer for required form #{form_id} cannot be empty.")
+        return data
 
 
 class ProcessSubmitRequestSerializer(serializers.Serializer):
-    """
-    {
-      "answers": [
-        {"form_id": 12, "answer": "text or JSON"},
-        {"form_id": 13, "answer": {"key": "value"}}
-      ]
-    }
-    """
-    answers = SubmitAnswerItemSerializer(many=True)
+    answers = SubmitAnswerItemSerializer(many=True, required=True)
 
     def validate(self, attrs):
-        form_ids = [item['form_id'] for item in attrs['answers']]
+        form_ids = [a['form_id'] for a in attrs['answers']]
         if len(form_ids) != len(set(form_ids)):
             raise serializers.ValidationError("Duplicate form_id in answers.")
         return attrs
@@ -302,5 +315,5 @@ class ProcessSubmitRequestSerializer(serializers.Serializer):
 
 class ProcessSubmitResponseSerializer(serializers.Serializer):
     session_id = serializers.UUIDField()
-    submitted = serializers.BooleanField()
+    message = serializers.CharField()
     saved_answers = serializers.IntegerField()
