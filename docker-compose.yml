@@ -27,10 +27,31 @@ services:
   redis:
     image: redis:7
     ports:
-      - "6380:6379"
+      - "6379:6379"
     volumes:
       - redis_data:/data
+  celery:
+    build: 
+      context: ./apps
+      dockerfile: Dockerfile
+    command: celery -A core worker -l info
+    volumes:
+      - ./apps:/apps
+    env_file:
+      - .env.dev
+    environment:
+      - DJANGO_ENV=development
+      - EMAIL_HOST_USER=amirmahdigolahmar@gmail.com
+      - EMAIL_HOST_PASSWORD=tzlxxoullrdylogg
+      - EMAIL_HOST=smtp.gmail.com
+      - EMAIL_PORT=587
+      - EMAIL_USE_TLS=True
+    depends_on:
+      - redis
+      - db
+      - web
 
 volumes:
   postgres_data:
   redis_data:
+
