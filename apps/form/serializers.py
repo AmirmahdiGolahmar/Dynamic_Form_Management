@@ -1,3 +1,4 @@
+from django.contrib.auth.hashers import make_password
 from rest_framework import serializers
 from django.contrib.auth.hashers import make_password
 from form.models import (
@@ -9,6 +10,33 @@ from form.models import (
     ProcessForm,
 )
 
+
+# --------------------------------------------
+# JSON Schema Convention for Question & Answer
+# --------------------------------------------
+# question_info (on Question model):
+# {
+#   "type": "text" | "select" | "checkbox",
+#   // if type = text:
+#   "placeholder": "optional",
+#   "min_length": 0,
+#   "max_length": 255,
+#   "regex": "optional"
+#   // if type = select or checkbox:
+#   "options": [
+#     {"id": "opt1", "label": "Option 1", "value": "optional"},
+#     ...
+#   ],
+#   // select behaves like checkbox but with max_select = 1
+#   "min_select": 0,
+#   "max_select": 1 | n
+# }
+#
+# answer_json (on Answer model):
+# - text:      {"value": "text answer"}
+# - select:    {"value": "opt_id"}
+# - checkbox:  {"values": ["opt_id_1", "opt_id_2", ...]}
+# --------------------------------------------
 
 # --------------------------------------------
 # question_info schema validator
