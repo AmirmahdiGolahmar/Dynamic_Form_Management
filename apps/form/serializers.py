@@ -1,5 +1,6 @@
 from django.contrib.auth.hashers import make_password
 from rest_framework import serializers
+from django.contrib.auth.hashers import make_password
 from form.models import (
     Form,
     Answer,
@@ -9,10 +10,6 @@ from form.models import (
     ProcessForm,
 )
 
-
-# --------------------------------------------
-# (Form CRUD)
-# --------------------------------------------
 
 # --------------------------------------------
 # JSON Schema Convention for Question & Answer
@@ -41,7 +38,9 @@ from form.models import (
 # - checkbox:  {"values": ["opt_id_1", "opt_id_2", ...]}
 # --------------------------------------------
 
-
+# --------------------------------------------
+# question_info schema validator
+# --------------------------------------------
 def validate_question_info_schema(info: dict):
     """Validate structure and logic of question_info JSON."""
     if not isinstance(info, dict):
@@ -78,28 +77,24 @@ def validate_question_info_schema(info: dict):
 
 
 # --------------------------------------------
-# Question inline serializer (for create/update)
+# Form create/update (با inline question)
 # --------------------------------------------
 class QuestionInlineSerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
-        fields = ['question_text', 'question_info', 'is_required', 'order_index']
+        fields = ['question_text', 'question_info', 'is_required']
 
     def validate_question_info(self, value):
         return validate_question_info_schema(value)
 
 
-# --------------------------------------------
-# Form Create/Update Serializer
-# --------------------------------------------
 class FormCreateUpdateSerializer(serializers.ModelSerializer):
     """
-    Used for creating or updating a Form.
-    - 'creator' is inferred from request.
-    - 'access_password' (plain text) is optional; hashed internally.
-    - Inline 'question' (OneToOne) creation/update is supported.
+    - creator از request پر می‌شود.
+    - access_password (plain) اختیاری است و داخل serializer هش می‌شود.
+    - ایجاد/ویرایش inline یک سوال (OneToOne) پشتیبانی می‌شود.
     """
-    access_password = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    access_password = serializers.CharField(write_only=True, required=False, allow_blank=True, allow_null=True)
     question = QuestionInlineSerializer(write_only=True, required=False)
 
     class Meta:
@@ -168,12 +163,12 @@ class FormCreateUpdateSerializer(serializers.ModelSerializer):
 
 
 # --------------------------------------------
-# Form Read Serializers
+# Form read
 # --------------------------------------------
 class QuestionReadSerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
-        fields = ['id', 'question_text', 'question_info', 'is_required', 'order_index', 'created_at', 'updated_at']
+        fields = ['id', 'question_text', 'question_info', 'is_required', 'created_at', 'updated_at']
 
 
 class FormDetailSerializer(serializers.ModelSerializer):
@@ -200,25 +195,41 @@ class FormListSerializer(serializers.ModelSerializer):
         model = Form
         fields = ['id', 'title', 'category', 'category_name', 'is_public', 'created_at', 'updated_at']
 
-# --------------------------------------------
-# (Process Detail)
-# --------------------------------------------
 
+class CategorySerializer(serializers.ModelSerializer):
+    owner = serializers.StringRelatedField(read_only=True)
+
+    class Meta:
+        model = Category
+        fields = [
+            'id',
+            'name',
+            'description',
+            'owner',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['id', 'owner', 'created_at', 'updated_at']
+
+
+# --------------------------------------------
+# Process detail (برای نمایش)
+# --------------------------------------------
 class QuestionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
-        fields = ['id', 'question_text', 'question_info', 'is_required', 'order_index']
+        fields = ['id', 'question_text', 'question_info', 'is_required']
 
 
 class FormSerializer(serializers.ModelSerializer):
-    questions = QuestionSerializer(many=True, read_only=True)
+    question = QuestionSerializer(read_only=True)  # OneToOne
     category_name = serializers.CharField(source='category.name', read_only=True)
 
     class Meta:
         model = Form
         fields = [
             'id', 'title', 'description', 'category_name',
-            'is_public', 'created_at', 'updated_at', 'questions'
+            'is_public', 'created_at', 'updated_at', 'question'
         ]
 
 
@@ -237,38 +248,100 @@ class ProcessDetailSerializer(serializers.ModelSerializer):
 
 
 # --------------------------------------------
-# (Process Build)
+# Process build / create
 # --------------------------------------------
-
 class ProcessFormInputSerializer(serializers.Serializer):
-    """Used for creating process-forms relations"""
     form_id = serializers.IntegerField()
     order_index = serializers.IntegerField()
 
 
 class ProcessBuildSerializer(serializers.ModelSerializer):
-    """Used for creating a new process along with related forms"""
-    forms = ProcessFormInputSerializer(many=True, write_only=True)
+    forms = ProcessFormInputSerializer(many=True, write_only=True, required=False)
 
     class Meta:
         model = Process
         fields = [
-            'name', 'description', 'category',
+            'id', 'name', 'description', 'category',
             'is_public', 'access_password_hash',
             'process_type', 'forms'
         ]
-    
+
     def create(self, validated_data):
         forms_data = validated_data.pop('forms', [])
         user = self.context['request'].user
         process = Process.objects.create(creator=user, **validated_data)
-
-        # Link forms to process
         for form_data in forms_data:
             ProcessForm.objects.create(
                 process=process,
                 form_id=form_data['form_id'],
                 order_index=form_data['order_index']
             )
-
         return process
+
+
+# --------------------------------------------
+# Process pages: welcome / end (POST-only views use these)
+# --------------------------------------------
+class ProcessWelcomeSerializer(serializers.ModelSerializer):
+    title = serializers.CharField(source='name', read_only=True)
+    total_forms = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Process
+        fields = ['id', 'title', 'description', 'process_type', 'total_forms']
+    
+    def get_total_forms(self, obj):
+        return obj.forms.count()
+
+    
+
+
+class ProcessEndSerializer(serializers.ModelSerializer):
+    title = serializers.CharField(source='name', read_only=True)
+    total_submissions = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Process
+        fields = ['id', 'title', 'description', 'total_submissions']
+    
+    def get_total_submissions(self, obj):
+        return obj.response_sessions.filter(status='submitted').count()
+
+
+# --------------------------------------------
+# Submit: request & response serializers
+# --------------------------------------------
+class SubmitAnswerItemSerializer(serializers.Serializer):
+    form_id = serializers.IntegerField()
+    answer = serializers.JSONField()
+
+    def validate(self, data):
+        form_id = data['form_id']
+        answer = data['answer']
+
+        # Check if form and question exist
+        try:
+            question = Question.objects.get(form_id=form_id)
+        except Question.DoesNotExist:
+            raise serializers.ValidationError(f"Form #{form_id} has no question defined.")
+
+        # Validate required answers
+        if question.is_required and (answer is None or answer == "" or answer == {}):
+            raise serializers.ValidationError(f"Answer for required form #{form_id} cannot be empty.")
+        return data
+
+
+class ProcessSubmitRequestSerializer(serializers.Serializer):
+    answers = SubmitAnswerItemSerializer(many=True, required=True)
+
+    def validate(self, attrs):
+        form_ids = [a['form_id'] for a in attrs['answers']]
+        if len(form_ids) != len(set(form_ids)):
+            raise serializers.ValidationError("Duplicate form_id in answers.")
+        return attrs
+
+
+class ProcessSubmitResponseSerializer(serializers.Serializer):
+    session_id = serializers.UUIDField()
+    message = serializers.CharField()
+    saved_answers = serializers.IntegerField()

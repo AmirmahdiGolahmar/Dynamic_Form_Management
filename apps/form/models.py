@@ -1,14 +1,15 @@
 from django.db import models
 import uuid
+from django.conf import settings
+
 
 # Create your models here.
-
 
 
 class Category(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField(null=True, blank=True)
-    owner = models.ForeignKey(to='account.User', on_delete=models.CASCADE, related_name='categories')
+    owner = models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='categories')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -31,19 +32,20 @@ class ProcessForm(models.Model):
         return f"{self.process.name} → {self.form.title}"
 
 
-
 class Form(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField(null=True, blank=True)
-    creator = models.ForeignKey(to='account.User', on_delete=models.CASCADE, related_name='forms')
+    # Use a unique reverse accessor on User to avoid clashes with Process.creator
+    creator = models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+                                related_name='forms')  # unique vs 'processes'
     category = models.ForeignKey(
-        to='Category', 
-        on_delete=models.SET_NULL, 
-        null=True, 
+        to='Category',
+        on_delete=models.SET_NULL,
+        null=True,
         related_name='forms',
-        )
+    )
     is_public = models.BooleanField(default=False)
-    access_password_hash = models.CharField(max_length=128)
+    access_password_hash = models.CharField(max_length=128, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -59,22 +61,23 @@ class Process(models.Model):
     forms = models.ManyToManyField(to='Form', through='ProcessForm', related_name='processes')
     name = models.CharField(max_length=255)
     description = models.TextField(null=True, blank=True)
-    creator = models.ForeignKey(to='account.User', on_delete=models.CASCADE, related_name='processes')
+    # Keep a different reverse accessor on User than Form.creator
+    creator = models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+                                related_name='processes')  # different from 'forms'
     category = models.ForeignKey(
-        to='Category', 
-        on_delete=models.SET_NULL, 
+        to='Category',
+        on_delete=models.SET_NULL,
         null=True,
         related_name='processes',
-        )
+    )
     is_public = models.BooleanField(default=False)
-    access_password_hash = models.CharField(max_length=128)
+    access_password_hash = models.CharField(max_length=128, blank=True, null=True)
     process_type = models.CharField(max_length=20, choices=PROCESS_TYPE_CHOICES, default='linear')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.name
-
 
 
 class Question(models.Model):
@@ -84,15 +87,14 @@ class Question(models.Model):
         related_name='question',
     )
     question_text = models.TextField()
-    question_info = models.JSONField() # type, options, etc.
+    question_info = models.JSONField()  # type, options, etc.
     is_required = models.BooleanField(default=False)
-    order_index = models.PositiveIntegerField()
+    # order_index = models.PositiveIntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.question_text
-    
 
 
 class ResponseSession(models.Model):
@@ -104,10 +106,10 @@ class ResponseSession(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     process = models.ForeignKey(to='Process', on_delete=models.CASCADE, related_name='response_sessions')
     responder = models.ForeignKey(
-        to='account.User', 
-        on_delete=models.CASCADE, 
+        to=settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
         related_name='response_sessions',
-        )
+    )
     started_at = models.DateTimeField(auto_now_add=True)
     submitted_at = models.DateTimeField(null=True, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
@@ -118,24 +120,22 @@ class ResponseSession(models.Model):
 
 class Answer(models.Model):
     response_session = models.ForeignKey(
-        to='ResponseSession', 
+        to='ResponseSession',
         on_delete=models.CASCADE,
         related_name='answers',
-        )
+    )
     form = models.ForeignKey(
-        to='Form', 
+        to='Form',
         on_delete=models.CASCADE,
         related_name='answers',
-        )
+    )
     question = models.ForeignKey(
-        to='Question', 
+        to='Question',
         on_delete=models.CASCADE,
         related_name='answers',
-        )
+    )
     answer_json = models.JSONField()
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"Answer {self.id} to Q{self.question.id}"
-
-

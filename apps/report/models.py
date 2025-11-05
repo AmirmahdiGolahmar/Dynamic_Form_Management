@@ -1,4 +1,3 @@
-# # app/models.py
 # from django.conf import settings
 # from django.db import models
 # from django.utils import timezone
@@ -81,3 +80,69 @@
 #
 #     def __str__(self) -> str:
 #         return f"Report#{self.pk} [{self.report_type}] for form {self.form_id} @ {self.generated_at:%Y-%m-%d %H:%M}"
+from django.db import models
+from django.utils import timezone
+
+
+class Report(models.Model):
+    REPORT_TYPE_CHOICES = [
+        ('summary', 'Summary'),
+        ('detailed', 'Detailed'),
+        ('custom', 'Custom'),
+    ]
+
+    process = models.ForeignKey(
+        'form.Process',
+        on_delete=models.CASCADE,
+        related_name='reports'
+    )
+    title = models.CharField(max_length=255, null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
+    # generated_at = models.DateTimeField(default=timezone.now)
+    report_type = models.CharField(
+        max_length=50,
+        choices=REPORT_TYPE_CHOICES,
+        default='summary'
+    )
+
+    # total_sessions_started = models.PositiveIntegerField(default=0)
+    # total_sessions_submitted = models.PositiveIntegerField(default=0)
+    # response_rate = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    # participants_count = models.PositiveIntegerField(default=0)
+    # total_answers = models.BigIntegerField(default=0)
+
+
+    # core report data (JSON result of analytics)
+    data = models.JSONField(default=dict)
+    note = models.TextField(null=True, blank=True)
+
+    generated_at = models.DateTimeField(default=timezone.now)
+
+    created_by = models.ForeignKey(
+        'account.User',
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='reports_created'
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-generated_at']
+        verbose_name = 'Report'
+        verbose_name_plural = 'Reports'
+
+    def __str__(self):
+        title = self.title or f"{self.report_type.capitalize()} Report"
+        return f"{title} for {self.process.name}"
+
+    def compute_summary(self):
+        """
+        Optionally compute or format data before saving.
+        Called from the ReportCreateAPIView.
+        """
+        data = self.data or {}
+        data['computed_at'] = timezone.now().isoformat()
+        return data
+
+

@@ -16,13 +16,21 @@ import dotenv
 import environ
 
 
+# Celery settings
+CELERY_BROKER_URL = "redis://redis:6379/0"
+CELERY_RESULT_BACKEND = "redis://redis:6379/0"
+CELERY_TIMEZONE = "Asia/Tehran"
+CELERY_TASK_TRACK_STARTED = True
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
 
 # ---------------------------------
 # Base Directory
 # ---------------------------------
 BASE_DIR = Path(__file__).resolve().parent.parent
 env = environ.Env()
-env.read_env(os.path.join(BASE_DIR, "../.env"))
+env.read_env(os.path.join(BASE_DIR, "../.env.dev"))
 
 # ---------------------------------
 # Environment Loading
@@ -35,8 +43,8 @@ dotenv.load_dotenv(os.path.join(BASE_DIR.parent, ENV_FILE))
 # Basic Django Config
 # ---------------------------------
 SECRET_KEY = os.getenv('SECRET_KEY', 'fallback_secret_key')
-# DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
+# DEBUG = True
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
 
 
@@ -49,6 +57,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'drf_spectacular',
+    'drf_spectacular_sidecar',
     "rest_framework",
     "rest_framework_simplejwt",
     'account',
@@ -69,8 +79,10 @@ MIDDLEWARE = [
 AUTH_USER_MODEL = "account.User"
 
 REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "account.authentication.CookieJWTAuthentication",
     ),
     #"DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.AllowAny",),
     "DEFAULT_THROTTLE_CLASSES": (
@@ -78,14 +90,25 @@ REST_FRAMEWORK = {
         "account.throttling.OTPEmailThrottle"
     ),
     "DEFAULT_THROTTLE_RATES": {
-        "otp_anon":  "10/hour",
-        "otp_email": "30/hour",
+        "otp_anon":  "1000/day",
+        "otp_email": "100/day",
     },
+}
+
+# DRF spectacular settings
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Your Project API',
+    'DESCRIPTION': 'Your project description',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'SWAGGER_UI_DIST': 'SIDECAR', 
+    'SWAGGER_UI_FAVICON_HREF': 'SIDECAR',
+    'REDOC_DIST': 'SIDECAR',
 }
 
 from datetime import timedelta
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=50),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
@@ -103,9 +126,9 @@ CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
          "LOCATION": f"redis://{os.getenv('REDIS_HOST', 'localhost')}:{os.getenv('REDIS_PORT', 6379)}/1",
-         "OPTIONS": {
-             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-         }
+         # "OPTIONS": {
+         #     "CLIENT_CLASS": "django_redis.client.DefaultClient",
+         # }
     }
 }
 
