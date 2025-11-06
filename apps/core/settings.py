@@ -25,6 +25,12 @@ CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 
+
+# GraphQL settings
+GRAPHENE = {
+    "SCHEMA": "core.schema.schema",
+}
+
 # ---------------------------------
 # Base Directory
 # ---------------------------------
@@ -57,6 +63,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'graphene_django',
     'drf_spectacular',
     'drf_spectacular_sidecar',
     "rest_framework",
